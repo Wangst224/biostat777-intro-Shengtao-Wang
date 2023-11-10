@@ -1,0 +1,170 @@
+---
+title: "Example Analysis"
+bibliography: references.bib
+format: html
+---
+![source: https://www.myvmc.com/banners-heart-health-centre/ecg-ekg-electrocardiogram/](ECG.jpg){fig-align="center"} 
+
+## Research Background and Data Source
+This example analysis focuses on predicting the occurrence of heart disease using data from demographics, physical tests, and medical examinations. We will employ logistic regression with LASSO, evaluate their performances, and find significant predictors.
+
+This analysis aims to help scientists as well as clinicians who try to understand what roles different factors play in predicting heart disease and provide a prediction tool in the real clinical setting.
+
+Data used in this analysis comes from the UCI Machine Learning Repository. Data files and documentation can be accessed [here](https://archive.ics.uci.edu/dataset/45/heart+disease). The whole dataset consists of 4 parts, but this analysis only uses the Cleveland database.
+
+## Data Processing
+Before analysis, a few steps of data processing are needed. Column names are replaced by meaningful abbreviations and some variables are converted to the factor format according to the documentation.
+
+::: {.callout-caution}
+Two variables `ca` and `thal` contain missing values, and are removed from the dataset for the sake of simplicity. This might cause some trouble, and we may use imputation to fix this in future studies.
+:::
+
+```{r}
+#| warning: false
+#| message: false
+
+library(tidyverse)
+data_raw = read.table("processed.cleveland.data", sep = ",")
+
+data = data_raw %>%
+    rename(age = V1, sex = V2, cp = V3, trestbps = V4, chol = V5,
+           fbs = V6, restecg = V7, thalach = V8, exang = V9, oldpeak = V10,
+           slope = V11, ca = V12, thal = V13, num = V14) %>%
+    select(-ca, -thal) %>%
+    mutate(sex = factor(sex),
+           cp = factor(cp),
+           fbs = factor(fbs),
+           restecg = factor(restecg),
+           exang = factor(exang),
+           slope = factor(slope),
+           hd = factor((num > 0)*1)) %>%
+    select(-num)
+```
+
+```{r}
+set.seed(1630)
+n = nrow(data)
+data$test = sample(rep(c(0, 1), times = c(round(0.75*n), n-round(0.75*n))))
+
+data_train = filter(data, test == 0) %>% select(-test)
+data_test = filter(data, test == 1) %>% select(-test)
+```
+
+## Descriptive Analysis
+Densities and bars are plotted for numeric variables and factor variables, respectively.
+
+::: {.callout-note}
+Some variables such as `age`, `thalach`, `cp` and `exang` demonstrate relations to heart disease status.
+:::
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show code"
+
+data %>%
+    select(where(is.numeric), hd) %>%
+    pivot_longer(-hd, names_to = "variables", values_to = "values") %>%
+    ggplot() +
+        geom_density(aes(x = values, color = hd), ) +
+        facet_wrap(variables~., scales = "free") +
+        labs(title = "Density plots of numeric varibles", subtitle = "Stratified by heart disease status: 1-diseased", caption = "Data source: UCI Machine Learning Repository")
+```
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show code"
+
+data %>%
+    select(where(is.factor)) %>%
+    pivot_longer(-hd, names_to = "variables", values_to = "values") %>%
+    ggplot() +
+        geom_bar(aes(x = values, fill = hd), stat = "count", position = "dodge") +
+        facet_wrap(variables~., scales = "free_x") +
+        labs(title = "Bar plots of factor varibles", subtitle = "Stratified by heart disease status: 1-diseased",
+             caption = "Data source: UCI Machine Learning Repository")
+```
+
+## Data Analysis
+Logistic regression including all predictors as well as lasso logistic regression are fitted. Cross-validation is used to find the best parameter $\lambda$ for Lasso.
+
+```{r}
+set.seed(1563)
+
+logi = glm(hd~., data = data_train, family = "binomial")
+predict_logi = factor((predict(logi, data_test, type = "response") > 0.5) * 1)
+```
+
+```{r}
+#| warning: false
+#| message: false
+
+library(glmnet)
+
+y = data_train$hd == "1"
+X_train = model.matrix(hd~., data = data_train)[,-1]
+X_test = model.matrix(hd~., data = data_test)[,-1]
+
+lambda = cv.glmnet(X_train, y, alpha = 1)$lambda.min
+logi_lasso = glmnet(X_train, y, family = "binomial", alpha = 1, lambda = lambda)
+
+
+predict_logi_lasso = factor((predict(logi_lasso, X_test, type = "response") > 0.5) * 1)
+```
+
+```{r}
+summary(logi)
+predict(logi_lasso, X_test, type = "coefficient")
+```
+
+```{r}
+#| column: margin
+#| code-fold: true
+#| code-summary: "Show code"
+
+accuracy_logi = mean(predict_logi == data_test$hd)
+accuracy_logi_lasso = mean(predict_logi_lasso == data_test$hd)
+
+sensitivity_logi = mean(predict_logi[data_test$hd == "1"] == data_test$hd[data_test$hd == "1"])
+sensitivity_logi_lasso = mean(predict_logi_lasso[data_test$hd == "1"] == data_test$hd[data_test$hd == "1"])
+
+specificity_logi = mean(predict_logi[data_test$hd == "0"] == data_test$hd[data_test$hd == "0"])
+specificity_logi_lasso = mean(predict_logi_lasso[data_test$hd == "0"] == data_test$hd[data_test$hd == "0"])
+
+result = matrix(c(accuracy_logi, sensitivity_logi, specificity_logi,
+                  accuracy_logi_lasso, sensitivity_logi_lasso, specificity_logi_lasso), c(3,2))
+rownames(result) = c("Accuracy", "Sensitivity", "Specificity")
+colnames(result) = c("Logistic regression", "LASSO logistic regression")
+
+knitr::kable(
+  round(result, 4)
+)
+```
+
+```{r}
+#| code-fold: true
+#| code-summary: "Show code"
+data.frame(logtistic = predict_logi,
+           logtistic_lasso = predict_logi_lasso,
+           test = data_test$hd) %>%
+    ggplot() +
+        geom_jitter(aes(x = logtistic, y = logtistic_lasso, color = test), width = 0.2, height = 0.2) +
+        labs(x = "Logistic regression", y = "LASSO logistic regression", color = "True status",
+             title = "Prediction results", subtitle = "Stratified by heart disease status: 1-diseased",
+             caption = "Data source: UCI Machine Learning Repository")
+```
+
+## Conclusion
+As predictive models logistic regression and LASSO logistic regression perform fairly well. Logistic regression has slightly better performance in terms of accuracy (80.26% vs 77.63%) and specificity (81.40% vs 76.74%). The two models agree on all but two sample's prediction results. As for important predictive factors, `sex`, `cp`(chest pain), `oldpeak` (ST depression induced by exercise relative to rest), and `slope` (slope of the peak exercise ST segment) show significant results. Male patients with asymptomatic chest pain and have a flat slope of the peak exercise ST segment are more likely to have heart disease. Scientists could look out for mechanisms under the surface and clinicians might want to give extra attention to such patients.
+
+## Functions Used
+`tidyverse`: `rename`, `select`, `mutate`, `filter` and `pivot_longer`.
+
+`ggplot`: `geom_density`, `geom_bar` and `geom_jitter`.
+
+## Reference
+
+::: {#refs}
+@ISLR
+@Detrano1989
+@UCIhd
+:::

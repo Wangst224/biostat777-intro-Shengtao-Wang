@@ -1,0 +1,6 @@
+- source: project
+  quarto-pub:
+    - id: f97fccb0-3b52-4154-8ba1-79742f43dd05
+      url: 'https://wangst224.quarto.pub/project-1'
+    - id: 8636fd85-6f7e-4649-a14a-e77be4560bbd
+      url: 'https://wangst224.quarto.pub/project-1'

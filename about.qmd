@@ -1,0 +1,22 @@
+---
+title: "About Me"
+format: html
+---
+
+## Education Experience
+* **Bachelor of Science in Statistics**  
+Fudan University, Shanghai, 2016-2021
+
+* **Master of Science in Biostatistics**  
+Johns Hopkins Bloomberg School of Public Health, 2021-2023
+
+* **Doctor of Philosophy in Biostatistics, Ongoing**  
+Johns Hopkins Bloomberg School of Public Health, 2023-2028
+
+## Professional Experience
+My research mostly focuses on microbiome studies. More specifically, I conduct methodological research aiming to develop more accurate and powerful statistical models for microbiome data analysis. With Dr. Ni Zhao, an associate professor in the department, I have worked on a few projects including "Differential Analysis through Proportional Hazards Model", "Reliability and Effectiveness of Microbiome Rarefaction", and "Longitudinal Analysis of Microbiome Data via Tensor Decomposition".
+
+## Personal Life
+I particularly enjoy music, especially musical theaters and classical music. I go to classical music concerts and musical shows almost weekly. My favorite composer is Antonio Vivaldi.
+
+![Source: https://www.nationalgeographic.com/premium/article/antonio-vivaldi-composer-four-seasons](Antonio Vivaldi.jpeg){width=50% fig-align="center"}

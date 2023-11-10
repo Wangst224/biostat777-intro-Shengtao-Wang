@@ -1,0 +1,9 @@
+---
+format: html
+---
+
+![](Bahamas.jpg){width=50% fig-align="center"}
+
+Greetings to whoever is looking at this! My name is Shengtao Wang. I am a first-year PhD student in the Department of Biostatistics, Johns Hopkins Bloomberg School of Public Health. Welcome to my website!
+
+

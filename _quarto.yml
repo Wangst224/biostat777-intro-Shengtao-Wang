@@ -1,0 +1,25 @@
+project:
+    title: "Project 1"
+    type: website
+    output-dir: docs
+
+editor: source
+
+website: 
+    navbar:
+        title: Shengtao Wang
+        background: primary
+        logo-href: index.qmd
+        right: 
+            - text: Home
+              file: index.qmd
+            - text: About
+              file: about.qmd
+            - text: Example Analysis
+              file: example_analysis.qmd
+    sidebar: true
+    
+        
+
+execute:
+    freeze: auto
